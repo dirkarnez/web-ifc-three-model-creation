@@ -1,0 +1,9 @@
+node_modules
+
+# Ignore all
+/dist/*
+
+# Unignore all with extensions
+!/dist/favicon.ico
+!/dist/styles.css
+!/dist/index.html
