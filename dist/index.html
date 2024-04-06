@@ -32,7 +32,8 @@
             IfcProfileTypeEnum,
             IFCEXTRUDEDAREASOLID, IfcExtrudedAreaSolid,
             IFCCARTESIANPOINT, IfcCartesianPoint,
-            IFCCOLUMN, IfcColumn, IfcAPI } = window.WebIFCThree.WebIFC;
+            IFCCOLUMN, IfcColumn, IfcAPI 
+        } = window.WebIFCThree.WebIFC;
         const ifcManager = window.WebIFCThree.createScene(document.getElementById('threeCanvas'));
 
     
@@ -67,45 +68,7 @@
     /** */
     let EID = 1;
 
-    function real(v/*: number*/)
-    {
-        return { type: 4, value: v}
-    }
-
-    function ref(v/*: number*/)
-    {
-        return { type: 5, value: v}
-    }
-
-    function empty()
-    {
-        return { type: 6}
-    }
-
-    function str(v/*: string*/)
-    {
-        return { type: 1, value: v}
-    }
-
-    function enm(v/*: string*/)
-    {
-        return { type: 3, value: v}
-    }
-
-    function makePt(x, y, z) {
-        return {
-            x: x/*: number*/, 
-            y: y/*number*/,
-            z: z/*number*/
-        }
-    }
-
-    function makePt2D(x, y) {
-        return {
-            x: x/*: number*/, 
-            y: y/*number*/
-        }
-    }
+    
 
     function Point(model/*: number*/, api/*: IfcAPI*/, o/*: pt*/)
     {

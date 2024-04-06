@@ -10,7 +10,7 @@ export class ThreeScene {
         this.renderer = new WebGLRenderer({ antialias: true, canvas: this.threeCanvas });
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
         // this.stats = new Stats();
-        this.grid = new GridHelper();
+        // this.grid = new GridHelper();
         this.setupScene();
     }
 
@@ -21,7 +21,7 @@ export class ThreeScene {
         // this.setupMonitoring();
         this.setupAnimation();
         this.setupCamera();
-        this.scene.add(this.grid);
+        // this.scene.add(this.grid);
     }
 
     setupAnimation = () => {
