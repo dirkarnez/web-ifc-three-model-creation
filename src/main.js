@@ -1,17 +1,8 @@
 import { ThreeScene } from './scene';
 import { IfcManager } from './ifc-manager';
-import * as WebIFC from 'web-ifc';
+import  * as  WebIFC from 'web-ifc';
 
-const {
-    IFCLOCALPLACEMENT, IfcLocalPlacement,
-    IFCDIRECTION, IfcDirection,
-    IFCAXIS2PLACEMENT3D, IfcAxis2Placement3D,
-    IFCCIRCLEPROFILEDEF, IfcCircleProfileDef,
-    IfcProfileTypeEnum,
-    IFCEXTRUDEDAREASOLID, IfcExtrudedAreaSolid,
-    IFCCARTESIANPOINT, IfcCartesianPoint,
-    IFCCOLUMN, IfcColumn, IfcAPI 
-} = WebIFC;
+const { IfcAPI } = WebIFC;
 
 let EID = 1;
 
@@ -71,8 +62,20 @@ function CreatePlacement(model/*: number*/, api/*: IfcAPI*/, location)
 
 
 function CreateIndexedPolygonalFace(numbers) {
-    let ID = EID++;
-    new WebIFC.IFC4.IfcPolygonalFaceSet(ID, WebIFC.IFCINDEXEDPOLYGONALFACE, numbers.map(num => new WebIFC.IfcPositiveInteger(new WebIFC.IfcInteger(num))))
+
+    const contextLocation = new WebIFC.IFC4.IfcCartesianPoint([new WebIFC.IFC4.IfcLengthMeasure(0), new WebIFC.IFC4.IfcLengthMeasure(0), new WebIFC.IFC4.IfcLengthMeasure(0)]);
+    const contextAxis = new WebIFC.IFC4.IfcDirection([new WebIFC.IFC4.IfcReal(0), new WebIFC.IFC4.IfcReal(0), new WebIFC.IFC4.IfcReal(1)]);
+    const contextRefDirection = new WebIFC.IFC4.IfcDirection([new WebIFC.IFC4.IfcReal(1), new WebIFC.IFC4.IfcReal(0), new WebIFC.IFC4.IfcReal(0)]);
+    
+    const context = new WebIFC.IFC4.IfcGeometricRepresentationContext(null, new WebIFC.IFC4.IfcLabel("Model"), new WebIFC.IFC4.IfcDimensionCount(3), new WebIFC.IFC4.IfcReal(1.E-05), new WebIFC.IFC4.IfcAxis2Placement3D(contextLocation, contextAxis, contextRefDirection));
+    const subContext = new WebIFC.IFC4.IfcGeometricRepresentationSubContext(new WebIFC.IFC4.IfcLabel("Body"), new WebIFC.IFC4.IfcLabel("Model"), context, null, WebIFC.IFC4.IfcGeometricProjectionEnum.MODEL_VIEW, null);
+    
+    const faceSet = new WebIFC.IFC4.IfcPolygonalFaceSet(new WebIFC.IFC4.IfcCartesianPointList3D(), null, [new WebIFC.IFC4.IfcIndexedPolygonalFace(numbers.map(num => new WebIFC.IfcPositiveInteger(new WebIFC.IfcInteger(num))))])
+    const shapeRepresentation = new WebIFC.IFC4.IfcShapeRepresentation(subContext, new WebIFC.IFC4.IfcLabel("Body"), new WebIFC.IFC4.IfcLabel("Tessellation"), [faceSet]);
+    
+    
+    #81=IFCPRODUCTDEFINITIONSHAPE($,$,(#80));
+
 }
 
 function CreateIndexedPolygonalFaceSet() {
