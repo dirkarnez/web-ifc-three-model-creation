@@ -23,16 +23,35 @@ function CreateAHU(ifcApi, modelID) {
 
     const subContext = new WebIFC.IFC4.IfcGeometricRepresentationSubContext(new WebIFC.IFC4.IfcLabel("Body"), new WebIFC.IFC4.IfcLabel("Model"), context, null, WebIFC.IFC4.IfcGeometricProjectionEnum.MODEL_VIEW, null);
     ifcApi.WriteLine(modelID, subContext);
-    
-    const coordinates = new WebIFC.IFC4.IfcCartesianPointList3D([[-1.,-1.,-1.],[-1.,-1.,1.],[-1.,1.,-1.],[-1.,1.,1.],[1.,-1.,-1.],[1.,-1.,1.],[1.,1.,-1.],[1.,1.,1.]].map(a => a.map(b => new WebIFC.IFC4.IfcLengthMeasure(b))));
-    const faceSet = new WebIFC.IFC4.IfcPolygonalFaceSet(coordinates, null, [
-        CreateFace([1,2,4,3]),
-        CreateFace([3,4,8,7]),
-        CreateFace([7,8,6,5]),
-        CreateFace([5,6,2,1]),
-        CreateFace([3,7,5,1]),
-        CreateFace([8,4,2,6])
-    ], null);
+
+    const raw = JSON.parse('{"coord":[0.5,0.5,0.5,0.5,0.5,-0.5,0.5,-0.5,0.5,0.5,-0.5,-0.5,-0.5,0.5,-0.5,-0.5,0.5,0.5,-0.5,-0.5,-0.5,-0.5,-0.5,0.5,-0.5,0.5,-0.5,0.5,0.5,-0.5,-0.5,0.5,0.5,0.5,0.5,0.5,-0.5,-0.5,0.5,0.5,-0.5,0.5,-0.5,-0.5,-0.5,0.5,-0.5,-0.5,-0.5,0.5,0.5,0.5,0.5,0.5,-0.5,-0.5,0.5,0.5,-0.5,0.5,0.5,0.5,-0.5,-0.5,0.5,-0.5,0.5,-0.5,-0.5,-0.5,-0.5,-0.5],"coordIndex":[0,2,1,2,3,1,4,6,5,6,7,5,8,10,9,10,11,9,12,14,13,14,15,13,16,18,17,18,19,17,20,22,21,22,23,21]}');
+    const x = raw.coord.reduce((prev, current, currentIndex) => {
+        if (currentIndex % 3 == 0) {
+            return [...prev, [current]];
+        } else {
+              return prev.map((ele, i) => i == prev.length - 1 ? [...ele, current] : ele)
+        }
+    }, []);
+
+    const y = raw.coordIndex.map(a => a + 1).reduce((prev, current, currentIndex) => {
+        if (currentIndex % 3 == 0) {
+            return [...prev, [current]];
+        } else {
+              return prev.map((ele, i) => i == prev.length - 1 ? [...ele, current] : ele)
+        }
+    }, []);
+
+    // [[-1.,-1.,-1.],[-1.,-1.,1.],[-1.,1.,-1.],[-1.,1.,1.],[1.,-1.,-1.],[1.,-1.,1.],[1.,1.,-1.],[1.,1.,1.]]
+    const coordinates = new WebIFC.IFC4.IfcCartesianPointList3D(x.map(a => a.map(b => new WebIFC.IFC4.IfcLengthMeasure(b))));
+    // [
+    //     CreateFace([1,2,4,3]),
+    //     CreateFace([3,4,8,7]),
+    //     CreateFace([7,8,6,5]),
+    //     CreateFace([5,6,2,1]),
+    //     CreateFace([3,7,5,1]),
+    //     CreateFace([8,4,2,6])
+    // ]
+    const faceSet = new WebIFC.IFC4.IfcPolygonalFaceSet(coordinates, null, y.map(yy => CreateFace(yy)), null);
 
     ifcApi.WriteLine(modelID, faceSet);
 
