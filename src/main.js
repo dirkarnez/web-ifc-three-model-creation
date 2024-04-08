@@ -72,7 +72,9 @@ function CreateAHU(ifcApi, modelID) {
     const ahuRefDirection = new WebIFC.IFC4.IfcDirection([new WebIFC.IFC4.IfcReal(1), new WebIFC.IFC4.IfcReal(0), new WebIFC.IFC4.IfcReal(0)]);
     ifcApi.WriteLine(modelID, ahuRefDirection);
     
-    const equipment = new WebIFC.IFC4.IfcUnitaryEquipment(new WebIFC.IFC4.IfcGloballyUniqueId('1$_tbZa5f5ce0wIPpJZNKH'), null, new WebIFC.IFC4.IfcLabel("AHU"), null, null, new WebIFC.IFC4.IfcLocalPlacement(null, new WebIFC.IFC4.IfcAxis2Placement3D(ahuLocation, ahuAxis, ahuRefDirection)), productDefinitionShape, null, WebIFC.IFC4.IfcUnitaryEquipmentTypeEnum.AIRHANDLER);
+    const equipment = new WebIFC.IFC4.IfcUnitaryEquipment(new WebIFC.IFC4.IfcGloballyUniqueId('1$_tbZa5f5ce0wIPpJZNKH'), null, new WebIFC.IFC4.IfcLabel("AHU"), null, null, 
+            new WebIFC.IFC4.IfcLocalPlacement(null, new WebIFC.IFC4.IfcAxis2Placement3D(ahuLocation, ahuAxis, ahuRefDirection)), 
+            productDefinitionShape, null, WebIFC.IFC4.IfcUnitaryEquipmentTypeEnum.AIRHANDLER);
     ifcApi.WriteLine(modelID, equipment);
 }
 
