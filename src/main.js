@@ -4,9 +4,81 @@ import  * as  WebIFC from 'web-ifc';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
+function extractIndexedFaceSet(geometry) {
+    const vertices = [];
+    const indices = [];
+
+    // Extract vertex positions
+    const positionAttribute = geometry.getAttribute('position');
+    for (let i = 0; i < positionAttribute.count; i++) {
+    const x = positionAttribute.getX(i);
+    const y = positionAttribute.getY(i);
+    const z = positionAttribute.getZ(i);
+    vertices.push(x, y, z);
+    }
+
+    // Extract face indices
+    const indexAttribute = geometry.getIndex();
+    if (indexAttribute) {
+    for (let i = 0; i < indexAttribute.count; i += 3) {
+        const a = indexAttribute.getX(i);
+        const b = indexAttribute.getX(i + 1);
+        const c = indexAttribute.getX(i + 2);
+        indices.push(a, b, c);
+    }
+    } else {
+    for (let i = 0; i < positionAttribute.count; i += 3) {
+        indices.push(i, i + 1, i + 2);
+    }
+    }
+
+    // Create IndexedFaceSet
+    const indexedFaceSet = {
+        coord: vertices,
+        coordIndex: indices
+    };
+
+    return indexedFaceSet;
+}
+
 function CreateFace(numbers) {
     const positiveIntegers = numbers.map(num => new WebIFC.IFC4.IfcPositiveInteger(num));
     return new WebIFC.IFC4.IfcIndexedPolygonalFace(positiveIntegers)
+}
+
+
+function CreateFaceSet(node) {
+    const geometry = extractIndexedFaceSet(node.geometry);
+
+    const x = geometry.coord.reduce((prev, current, currentIndex) => {
+        if (currentIndex % 3 == 0) {
+            return [...prev, [current]];
+        } else {
+            return prev.map((ele, i) => i == prev.length - 1 ? [...ele, current] : ele)
+        }
+    }, []);
+
+    const y = geometry.coordIndex.map(a => a + 1).reduce((prev, current, currentIndex) => {
+        if (currentIndex % 3 == 0) {
+            return [...prev, [current]];
+        } else {
+            return prev.map((ele, i) => i == prev.length - 1 ? [...ele, current] : ele)
+        }
+    }, []);
+
+    // [[-1.,-1.,-1.],[-1.,-1.,1.],[-1.,1.,-1.],[-1.,1.,1.],[1.,-1.,-1.],[1.,-1.,1.],[1.,1.,-1.],[1.,1.,1.]]
+    const coordinates = new WebIFC.IFC4.IfcCartesianPointList3D(x.map(a => a.map(b => new WebIFC.IFC4.IfcLengthMeasure(b))));
+    // [
+    //     CreateFace([1,2,4,3]),
+    //     CreateFace([3,4,8,7]),
+    //     CreateFace([7,8,6,5]),
+    //     CreateFace([5,6,2,1]),
+    //     CreateFace([3,7,5,1]),
+    //     CreateFace([8,4,2,6])
+    // ]
+    const faceSet = new WebIFC.IFC4.IfcPolygonalFaceSet(coordinates, null, y.map(yy => CreateFace(yy)), null);
+    ifcApi.WriteLine(modelID, faceSet);
+    return faceSet;
 }
 
 // new WebIFC.IfcAPI().CreateModel();
@@ -35,91 +107,28 @@ function CreateAHU(ifcApi, modelID) {
                 // working
                 // const raw = JSON.parse('{"coord":[0.5,0.5,0.5,0.5,0.5,-0.5,0.5,-0.5,0.5,0.5,-0.5,-0.5,-0.5,0.5,-0.5,-0.5,0.5,0.5,-0.5,-0.5,-0.5,-0.5,-0.5,0.5,-0.5,0.5,-0.5,0.5,0.5,-0.5,-0.5,0.5,0.5,0.5,0.5,0.5,-0.5,-0.5,0.5,0.5,-0.5,0.5,-0.5,-0.5,-0.5,0.5,-0.5,-0.5,-0.5,0.5,0.5,0.5,0.5,0.5,-0.5,-0.5,0.5,0.5,-0.5,0.5,0.5,0.5,-0.5,-0.5,0.5,-0.5,0.5,-0.5,-0.5,-0.5,-0.5,-0.5],"coordIndex":[0,2,1,2,3,1,4,6,5,6,7,5,8,10,9,10,11,9,12,14,13,14,15,13,16,18,17,18,19,17,20,22,21,22,23,21]}');
                 
+                let faceSetList = [];
                 const model = gltf.scene;
                 // const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
                 model.traverse(function(node) {
-                    debugger
                     if (node.isMesh) {
-                        debugger
-                        console.log("!!");
-                        // node.material = material;
+                        const faceSet = CreateFaceSet(node);
+                        
+                        if (!!node.material.color.isColor) {
+                            const color = CreateColor(node.material.color.r, node.material.color.g, node.material.color.b);
+                            ColorFaceSet(faceSet, color);
+                        }
+                        faceSetList.push(faceSet);
                     }
                 });
 
-                const aaaa = gltf.scene.children[0].children.map(v => v.geometry);
+                //const aaaa = gltf.scene.children[0].children.map(v => v.geometry);
     
-                const a = BufferGeometryUtils.mergeGeometries(aaaa);
-                debugger;
-                const aa = (function extractIndexedFaceSet(geometry) {
-                    const vertices = [];
-                    const indices = [];
-                
-                    // Extract vertex positions
-                    const positionAttribute = geometry.getAttribute('position');
-                    for (let i = 0; i < positionAttribute.count; i++) {
-                    const x = positionAttribute.getX(i);
-                    const y = positionAttribute.getY(i);
-                    const z = positionAttribute.getZ(i);
-                    vertices.push(x, y, z);
-                    }
-                
-                    // Extract face indices
-                    const indexAttribute = geometry.getIndex();
-                    if (indexAttribute) {
-                    for (let i = 0; i < indexAttribute.count; i += 3) {
-                        const a = indexAttribute.getX(i);
-                        const b = indexAttribute.getX(i + 1);
-                        const c = indexAttribute.getX(i + 2);
-                        indices.push(a, b, c);
-                    }
-                    } else {
-                    for (let i = 0; i < positionAttribute.count; i += 3) {
-                        indices.push(i, i + 1, i + 2);
-                    }
-                    }
-                
-                    // Create IndexedFaceSet
-                    const indexedFaceSet = {
-                        coord: vertices,
-                        coordIndex: indices
-                    };
-                
-                    return indexedFaceSet;
-                })(a);
-
-                const x = aa.coord.reduce((prev, current, currentIndex) => {
-                        if (currentIndex % 3 == 0) {
-                            return [...prev, [current]];
-                        } else {
-                            return prev.map((ele, i) => i == prev.length - 1 ? [...ele, current] : ele)
-                        }
-                    }, []);
-                
-                    const y = aa.coordIndex.map(a => a + 1).reduce((prev, current, currentIndex) => {
-                        if (currentIndex % 3 == 0) {
-                            return [...prev, [current]];
-                        } else {
-                            return prev.map((ele, i) => i == prev.length - 1 ? [...ele, current] : ele)
-                        }
-                    }, []);
-                
-                // [[-1.,-1.,-1.],[-1.,-1.,1.],[-1.,1.,-1.],[-1.,1.,1.],[1.,-1.,-1.],[1.,-1.,1.],[1.,1.,-1.],[1.,1.,1.]]
-                const coordinates = new WebIFC.IFC4.IfcCartesianPointList3D(x.map(a => a.map(b => new WebIFC.IFC4.IfcLengthMeasure(b))));
-                // [
-                //     CreateFace([1,2,4,3]),
-                //     CreateFace([3,4,8,7]),
-                //     CreateFace([7,8,6,5]),
-                //     CreateFace([5,6,2,1]),
-                //     CreateFace([3,7,5,1]),
-                //     CreateFace([8,4,2,6])
-                // ]
-                const faceSet = new WebIFC.IFC4.IfcPolygonalFaceSet(coordinates, null, y.map(yy => CreateFace(yy)), null);
-            
-                ifcApi.WriteLine(modelID, faceSet);
-            
-                const shapeRepresentation = new WebIFC.IFC4.IfcShapeRepresentation(subContext, new WebIFC.IFC4.IfcLabel("Body"), new WebIFC.IFC4.IfcLabel("Tessellation"), [faceSet]);
+                //const a = BufferGeometryUtils.mergeGeometries(aaaa);
+               
+                const shapeRepresentation = new WebIFC.IFC4.IfcShapeRepresentation(subContext, new WebIFC.IFC4.IfcLabel("Body"), new WebIFC.IFC4.IfcLabel("Tessellation"), faceSetList);
                 ifcApi.WriteLine(modelID, shapeRepresentation);
-            
+        
                 const productDefinitionShape = new WebIFC.IFC4.IfcProductDefinitionShape(null, null, [shapeRepresentation]);
                 ifcApi.WriteLine(modelID, productDefinitionShape);
             
@@ -151,10 +160,17 @@ function CreateAHU(ifcApi, modelID) {
     });
 }
 
+function generateColorName(r, g, b) {
+    // e.material.color.r
+    const normalized = v => String(((v) * 255).toFixed(3)).replace(".", "_")
+    return `${normalized(r)}+${normalized(g)}+${normalized(b)}`
+    
+}
 function coloring() {
+    // IFCSTYLEDITEM to a  IFCPOLYGONALFACESET
     /*
     #1940=IFCSHAPEREPRESENTATION(#15,'Body','Tessellation',(#1939));
-    #998=IFCPRODUCTDEFINITIONSHAPE($,$,(#1940));
+
     #999=IFCMATERIAL('Material',$,$);
     #1000=IFCSURFACESTYLE('Material',.BOTH.,(#1001));
     #1001=IFCSURFACESTYLESHADING(#1002,0.);
