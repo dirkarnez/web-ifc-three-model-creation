@@ -11,25 +11,25 @@ function extractIndexedFaceSet(geometry) {
     // Extract vertex positions
     const positionAttribute = geometry.getAttribute('position');
     for (let i = 0; i < positionAttribute.count; i++) {
-    const x = positionAttribute.getX(i);
-    const y = positionAttribute.getY(i);
-    const z = positionAttribute.getZ(i);
-    vertices.push(x, y, z);
+        const x = positionAttribute.getX(i);
+        const y = positionAttribute.getY(i);
+        const z = positionAttribute.getZ(i);
+        vertices.push(x, y, z);
     }
 
     // Extract face indices
     const indexAttribute = geometry.getIndex();
-    if (indexAttribute) {
-    for (let i = 0; i < indexAttribute.count; i += 3) {
-        const a = indexAttribute.getX(i);
-        const b = indexAttribute.getX(i + 1);
-        const c = indexAttribute.getX(i + 2);
-        indices.push(a, b, c);
-    }
+    if (!!indexAttribute) {
+        for (let i = 0; i < indexAttribute.count; i += 3) {
+            const a = indexAttribute.getX(i);
+            const b = indexAttribute.getX(i + 1);
+            const c = indexAttribute.getX(i + 2);
+            indices.push(a, b, c);
+        }
     } else {
-    for (let i = 0; i < positionAttribute.count; i += 3) {
-        indices.push(i, i + 1, i + 2);
-    }
+        for (let i = 0; i < positionAttribute.count; i += 3) {
+            indices.push(i, i + 1, i + 2);
+        }
     }
 
     // Create IndexedFaceSet
@@ -42,12 +42,10 @@ function extractIndexedFaceSet(geometry) {
 }
 
 function CreateFace(numbers) {
-    const positiveIntegers = numbers.map(num => new WebIFC.IFC4.IfcPositiveInteger(num));
-    return new WebIFC.IFC4.IfcIndexedPolygonalFace(positiveIntegers)
+    return new WebIFC.IFC4.IfcIndexedPolygonalFace(numbers.map(num => new WebIFC.IFC4.IfcPositiveInteger(num)));
 }
 
-
-function CreateFaceSet(node) {
+function CreateFaceSet(modelID, node) {
     const geometry = extractIndexedFaceSet(node.geometry);
 
     const x = geometry.coord.reduce((prev, current, currentIndex) => {
@@ -87,7 +85,7 @@ function CreateAHU(ifcApi, modelID) {
         new GLTFLoader()
         .load(
             // resource URL
-            'models/model.glb',
+            './model.glb',
             // called when the resource is loaded
             function ( gltf ) {
                 const contextLocation = new WebIFC.IFC4.IfcCartesianPoint([new WebIFC.IFC4.IfcLengthMeasure(0), new WebIFC.IFC4.IfcLengthMeasure(0), new WebIFC.IFC4.IfcLengthMeasure(0)]);
@@ -112,11 +110,10 @@ function CreateAHU(ifcApi, modelID) {
                 // const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
                 model.traverse(function(node) {
                     if (node.isMesh) {
-                        const faceSet = CreateFaceSet(node);
+                        const faceSet = CreateFaceSet(modelID, node);
                         
                         if (!!node.material.color.isColor) {
-                            const color = CreateColor(node.material.color.r, node.material.color.g, node.material.color.b);
-                            ColorFaceSet(faceSet, color);
+                            CreateColor(ifcApi, modelID, subContext, faceSet, node.material.color.r, node.material.color.g, node.material.color.b);
                         }
                         faceSetList.push(faceSet);
                     }
@@ -160,13 +157,9 @@ function CreateAHU(ifcApi, modelID) {
     });
 }
 
-function generateColorName(r, g, b) {
-    // e.material.color.r
+function CreateColor(ifcApi, modelID, subContext, faceSet, r, g, b) {
     const normalized = v => String(((v) * 255).toFixed(3)).replace(".", "_")
-    return `${normalized(r)}+${normalized(g)}+${normalized(b)}`
-    
-}
-function coloring() {
+    const generateColorName = (r, g, b) => `${normalized(r)}+${normalized(g)}+${normalized(b)}`
     // IFCSTYLEDITEM to a  IFCPOLYGONALFACESET
     /*
     #1940=IFCSHAPEREPRESENTATION(#15,'Body','Tessellation',(#1939));
@@ -179,6 +172,30 @@ function coloring() {
     #1004=IFCSTYLEDREPRESENTATION(#15,'Body',$,(#1003));
     #1005=IFCMATERIALDEFINITIONREPRESENTATION($,$,(#1004),#999);
     */
+   /*
+   #---------------2236=IFCMATERIAL('Material.001',$,$);
+#----------------2237=IFCSURFACESTYLE('Material.001',.BOTH.,(#2238));
+#------------2238=IFCSURFACESTYLESHADING(#2239,0.);
+#-----------2239=IFCCOLOURRGB($,0.00887753069400787,0.0464618615806103,0.800000071525574);
+#2240=IFCSTYLEDITEM($,(#2237),'Material.001');
+#2241=IFCSTYLEDREPRESENTATION(#15,'Body',$,(#2240));
+#2242=IFCMATERIALDEFINITIONREPRESENTATION($,$,(#2241),#2236);
+   */
+   //[new WebIFC.IFC4.IfcReal(1), new WebIFC.IFC4.IfcReal(0), new WebIFC.IFC4.IfcReal(0)]
+    const ifcMaterial = new WebIFC.IFC4.IfcMaterial(new WebIFC.IFC4.IfcLabel(generateColorName(r, g, b)), null, null);
+    
+    const color = new WebIFC.IFC4.IfcColourRgb(
+        null, 
+        new WebIFC.IFC4.IfcNormalisedRatioMeasure(r), 
+        new WebIFC.IFC4.IfcNormalisedRatioMeasure(g), 
+        new WebIFC.IFC4.IfcNormalisedRatioMeasure(b)
+    );
+    const surfaceStyle = new WebIFC.IFC4.IfcSurfaceStyle(new WebIFC.IFC4.IfcLabel(generateColorName(r, g, b)), WebIFC.IFC4.IfcSurfaceSide.BOTH, [new WebIFC.IFC4.IfcSurfaceStyleShading(color, new WebIFC.IFC4.IfcNormalisedRatioMeasure(0))]);
+    const styledItem = new WebIFC.IFC4.IfcStyledItem(faceSet, [surfaceStyle], new WebIFC.IFC4.IfcLabel(generateColorName(r, g, b)));
+    const styledRepresentation = new WebIFC.IFC4.IfcStyledRepresentation(subContext, new WebIFC.IFC4.IfcLabel("Body"), null, [styledItem]);
+    const materialDefinitionRepresentation = new WebIFC.IFC4.IfcMaterialDefinitionRepresentation(null, null, [styledRepresentation], ifcMaterial);
+
+    ifcApi.WriteLine(modelID, materialDefinitionRepresentation);
 }
 
 function downloadString(text, fileType, fileName) {
