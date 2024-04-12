@@ -217,8 +217,7 @@ export default {
     WebIFC,
     CreateAHU:  (ifcApi, modelID, file) => CreateAHU(ifcApi, modelID, file),
     DownloadAsIFCFile: (ifcApi, modelID) => {
-        let data= ifcApi.SaveModel(modelID);
-        downloadString(new TextDecoder().decode(data), "application/x-step", "model.ifc")
+        downloadString(new TextDecoder().decode(ifcApi.SaveModel(modelID)), "application/x-step", "model.ifc")
     },
     createScene: htmlElement => new IfcManager(new ThreeScene(htmlElement).scene)
 }
