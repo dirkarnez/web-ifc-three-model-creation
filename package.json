@@ -31,14 +31,14 @@
   "dependencies": {
     "client-zip": "^2.2.2",
     "stats.js": "^0.17.0",
-    "three": "^0.135.0",
-    "web-ifc": "^0.0.53",
-    "web-ifc-three": "0.0.119"
+    "three": "^0.163.0",
+    "web-ifc": "^0.0.53"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.20.2",
     "@rollup/plugin-babel": "^6.0.2",
     "@rollup/plugin-commonjs": "^22.0.2",
+    "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.1.0",
     "cpx": "^1.5.0"
   }

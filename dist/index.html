@@ -29,21 +29,28 @@
         .then(() => { 
             debugger;
             let modelID = ifcApi.CreateModel({
-                schema: "IFC4"
-            });
-            window.WebIFCThree.CreateAHU(ifcApi, modelID, [1,2,3]);
-            debugger;
-            window.WebIFCThree.DownloadAsIFCFile(ifcApi, modelID);
+                    schema: "IFC4"
+                });
+                window.WebIFCThree.CreateAHU(ifcApi, modelID)
+                .then(() => {
+                    debugger;
+                    window.WebIFCThree.DownloadAsIFCFile(ifcApi, modelID);
+                }) //, changed.target.files[0]);
+             
+
+
         });
 
         const input = document.querySelector('input[type="file"]');
-        input.addEventListener('change', changed => {
-            ifcManager
-                .loadIFC(changed.target.files[0])
-                .then(() => {
-                    console.log("done");
-                })
-        }, false);
+            input.addEventListener('change', changed => {
+                // ifcManager
+                //     .loadIFC(changed.target.files[0])
+                //     .then(() => {
+                //         console.log("done");
+                //     })
+                
+
+            }, false);
     </script>
 </body>
 
